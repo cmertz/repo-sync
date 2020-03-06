@@ -21,9 +21,10 @@ import (
 )
 
 const (
-	kindGitlab = "gitlab"
-	kindGitea  = "gitea"
-	kindGithub = "github"
+	kindGitlab    = "gitlab"
+	kindGitea     = "gitea"
+	kindGithub    = "github"
+	kindPlainRepo = "git"
 )
 
 type repoURL string
@@ -130,6 +131,8 @@ func (r repoSource) repos(ctx context.Context) ([]repoURL, error) {
 		return reposGithub(ctx, token, r.Username)
 	case kindGitea:
 		return reposGitea(r.URL, token, r.Username)
+	case kindPlainRepo:
+		return []repoURL{repoURL(r.URL)}, nil
 	default:
 		panic(fmt.Sprintf("unknown provider kind '%s'", r.Kind))
 	}
