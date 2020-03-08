@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -208,8 +209,13 @@ func main() {
 		panic(err)
 	}
 
+	confPath := home + "/.config/reposync.yaml"
+
+	flag.StringVar(&confPath, "config", confPath, "TODO")
+	flag.Parse()
+
 	var b []byte
-	b, err = ioutil.ReadFile(home + "/.reposync.yml")
+	b, err = ioutil.ReadFile(confPath)
 	if err != nil {
 		panic(err)
 	}
