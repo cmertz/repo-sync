@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -206,7 +207,7 @@ func reposGitlab(ctx context.Context, url, token, prefix string) ([]repo, error)
 func main() {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	confPath := home + "/.config/reposync.yaml"
@@ -217,13 +218,13 @@ func main() {
 	var b []byte
 	b, err = ioutil.ReadFile(confPath)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	var sources []repoSource
 	err = yaml.Unmarshal(b, &sources)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	var sig = make(chan os.Signal)
@@ -240,13 +241,13 @@ func main() {
 	for _, s := range sources {
 		repos, err := s.repos(ctx)
 		if err != nil {
-			panic(err)
+			log.Fatalln(err)
 		}
 
 		for _, repo := range repos {
 			err = repo.sync(ctx)
 			if err != nil {
-				panic(err)
+				log.Fatalln(err)
 			}
 		}
 	}
