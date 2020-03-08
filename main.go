@@ -68,6 +68,8 @@ func (r repo) sync(ctx context.Context) error {
 		return nil
 	}
 
+	// if w.
+
 	return err
 }
 
@@ -112,7 +114,7 @@ func (r repoSource) repos(ctx context.Context) ([]repo, error) {
 	case kindGitRepo:
 		return []repo{repo{remote: r.URL, path: r.Path}}, nil
 	default:
-		panic(fmt.Sprintf("unknown provider kind '%s'", r.Kind))
+		return []repo{}, fmt.Errorf("unknown provider kind '%s'", r.Kind)
 	}
 }
 
@@ -241,13 +243,15 @@ func main() {
 	for _, s := range sources {
 		repos, err := s.repos(ctx)
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
+			continue
 		}
 
 		for _, repo := range repos {
 			err = repo.sync(ctx)
 			if err != nil {
-				log.Fatalln(err)
+				log.Println(err)
+				continue
 			}
 		}
 	}
