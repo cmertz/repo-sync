@@ -68,8 +68,6 @@ func (r repo) sync(ctx context.Context) error {
 		return nil
 	}
 
-	// if w.
-
 	return err
 }
 
