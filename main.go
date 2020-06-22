@@ -188,7 +188,7 @@ func reposGitlab(ctx context.Context, url, token, prefix string) ([]repo, error)
 	c := gitlab.NewClient(nil, token)
 	c.SetBaseURL(url)
 
-	repos, _, err := c.Projects.ListProjects(&gitlab.ListProjectsOptions{}, gitlab.WithContext(ctx))
+	repos, _, err := c.Projects.ListProjects(&gitlab.ListProjectsOptions{Visibility: gitlab.Visibility(gitlab.PrivateVisibility)}, gitlab.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}
