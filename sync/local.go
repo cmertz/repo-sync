@@ -11,14 +11,16 @@ import (
 type local string
 
 func (l local) ensureParentPathExists() error {
-	elems := strings.Split(string(l), string(os.PathSeparator))
-	parent := strings.Join(elems[:len(elems)-1], "/")
+	sep := string(os.PathSeparator)
+	elems := strings.Split(l.path(), sep)
+
+	parent := strings.Join(elems[:len(elems)-1], sep)
 
 	return os.MkdirAll(parent, 0700)
 }
 
 func (l local) open() (*git.Repository, error) {
-	return git.PlainOpen(string(l))
+	return git.PlainOpen(l.path())
 }
 
 func (l local) exists() bool {
