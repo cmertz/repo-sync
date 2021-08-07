@@ -15,7 +15,7 @@ import (
 // Sync represents a synchronization from a remote
 // git repository to a local working copy
 type Sync struct {
-	remote string
+	remote remote
 	local  local
 }
 
@@ -23,13 +23,13 @@ type Sync struct {
 func New(remoteRepositoryURL, localWorkingCopy string) Sync {
 	return Sync{
 		local:  local(localWorkingCopy),
-		remote: remoteRepositoryURL,
+		remote: remote(remoteRepositoryURL),
 	}
 }
 
 func (s Sync) clone(ctx context.Context) error {
 	_, err := git.PlainCloneContext(ctx, s.local.path(), false, &git.CloneOptions{
-		URL: s.remote,
+		URL: s.remote.url(),
 	})
 
 	// ignore empty remotes
