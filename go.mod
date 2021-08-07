@@ -5,4 +5,7 @@ go 1.16
 require (
 	code.gitea.io/sdk/gitea v0.14.1
 	github.com/go-git/go-git/v5 v5.4.2
+	github.com/shurcooL/githubv4 v0.0.0-20210725200734-83ba7b4c9228
+	github.com/shurcooL/graphql v0.0.0-20200928012149-18c5c3165e3a // indirect
+	golang.org/x/oauth2 v0.0.0-20210805134026-6f1e6394065a
 )
