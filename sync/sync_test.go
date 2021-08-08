@@ -22,7 +22,7 @@ func TestSync_Do(t *testing.T) {
 		t.Error(err)
 	}
 
-	defer os.Remove(tmp)
+	defer os.RemoveAll(tmp)
 
 	s := Sync{
 		remote: remote(defaultRemoteURL),

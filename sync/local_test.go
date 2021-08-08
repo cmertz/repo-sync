@@ -20,6 +20,8 @@ func TestLocal_ensureParentPathExists(t *testing.T) {
 		t.Errorf("unexpected error %s", err)
 	}
 
+	defer os.RemoveAll(tmp)
+
 	if _, err := os.Stat(parent); os.IsNotExist(err) {
 		t.Errorf("expected path %s to exist", parent)
 	}
