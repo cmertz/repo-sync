@@ -1,6 +1,5 @@
-// package sync provides functionality to
-// synchronize a remote git repository to
-// a local working copy
+// package sync provides functionality to synchronize
+// remote git repositories to local working copies.
 package sync
 
 import (
@@ -17,14 +16,6 @@ import (
 type Sync struct {
 	remote remote
 	local  local
-}
-
-// New creates a new `Sync`
-func New(remoteRepositoryURL, localWorkingCopy string) Sync {
-	return Sync{
-		local:  local(localWorkingCopy),
-		remote: remote(remoteRepositoryURL),
-	}
 }
 
 func (s Sync) clone(ctx context.Context) error {
