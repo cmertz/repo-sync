@@ -14,13 +14,13 @@ type Template struct {
 	LocalPrefix string
 }
 
-func (t Template) Syncs(ctx context.Context) ([]Sync, error) {
+func (t Template) Syncs(ctx context.Context) ([]Syncer, error) {
 	remotes, err := t.RemoteSource.List(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("Syncs: %w", err)
 	}
 
-	var res []Sync
+	var res []Syncer
 
 	for _, rem := range remotes {
 		r := Remote(rem)

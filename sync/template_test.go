@@ -35,12 +35,12 @@ func TestTemplate_Syncs(t *testing.T) {
 		t.Errorf("expected 2 results, actual %d results", len(s1))
 	}
 
-	if s1[0].Local != "/src/a" {
-		t.Errorf("expected /src/a, actual %s", s1[0].Local)
+	if s2, _ := s1[0].(sync.Sync); s2.Local != "/src/a" {
+		t.Errorf("expected /src/a, actual %s", s2.Local)
 	}
 
-	if s1[1].Local != "/src/b" {
-		t.Errorf("expected /src/b, actual %s", s1[1].Local)
+	if s2, _ := s1[1].(sync.Sync); s2.Local != "/src/b" {
+		t.Errorf("expected /src/b, actual %s", s2.Local)
 	}
 
 	tpl2 := sync.Template{
