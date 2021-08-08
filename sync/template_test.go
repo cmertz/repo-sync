@@ -1,3 +1,6 @@
+// nolint: testpackage
+// converting tho blackbox tests (i.e. `sync_test` package)
+// requires exposing internals of `Sync`
 package sync
 
 import (
@@ -32,14 +35,17 @@ func TestTemplate_Syncs(t *testing.T) {
 	if len(s1) != 2 {
 		t.Errorf("expected 2 results, actual %d results", len(s1))
 	}
+
 	if s1[0].local != "/src/a" {
 		t.Errorf("expected /src/a, actual %s", s1[0].local)
 	}
+
 	if s1[1].local != "/src/b" {
 		t.Errorf("expected /src/b, actual %s", s1[1].local)
 	}
 
 	tpl2 := Template{
+		// nolint: goerr113
 		RemoteSource: errorRemoteSource{errors.New("woops")},
 		LocalPrefix:  "/src",
 	}
@@ -48,6 +54,7 @@ func TestTemplate_Syncs(t *testing.T) {
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
+
 	if s2 != nil {
 		t.Errorf("expected nil result, actual %v", s2)
 	}

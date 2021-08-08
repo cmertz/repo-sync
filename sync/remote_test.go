@@ -1,3 +1,5 @@
+// nolint: testpackage
+// testing an unexported type
 package sync
 
 import (

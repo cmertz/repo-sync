@@ -2,9 +2,12 @@ package source
 
 import (
 	"context"
+	"fmt"
 
 	"code.gitea.io/sdk/gitea"
 )
+
+const defaultGiteaMaxPageSize = 50
 
 // Gitea is a gitea source for remotes to sync from
 type Gitea struct {
@@ -20,7 +23,7 @@ func (g Gitea) List(ctx context.Context) ([]string, error) {
 		gitea.SetToken(g.Token),
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("List: %w", err)
 	}
 
 	// TODO: pagination
@@ -28,11 +31,11 @@ func (g Gitea) List(ctx context.Context) ([]string, error) {
 	repos, resp, err := client.ListMyRepos(gitea.ListReposOptions{
 		ListOptions: gitea.ListOptions{
 			Page:     1,
-			PageSize: 50,
+			PageSize: defaultGiteaMaxPageSize,
 		},
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("List: %w", err)
 	}
 	defer resp.Body.Close()
 

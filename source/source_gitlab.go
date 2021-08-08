@@ -2,6 +2,7 @@ package source
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/xanzy/go-gitlab"
 )
@@ -19,7 +20,7 @@ func (g Gitlab) List(ctx context.Context) ([]string, error) {
 		gitlab.WithBaseURL(g.URL),
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("List: %w", err)
 	}
 
 	// TODO: pagination
@@ -30,7 +31,7 @@ func (g Gitlab) List(ctx context.Context) ([]string, error) {
 		gitlab.WithContext(ctx),
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("List: %w", err)
 	}
 	defer resp.Body.Close()
 

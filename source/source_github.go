@@ -2,6 +2,7 @@ package source
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/shurcooL/githubv4"
 	"golang.org/x/oauth2"
@@ -44,7 +45,7 @@ func (g Github) List(ctx context.Context) ([]string, error) {
 
 	err := client.Query(ctx, &query, map[string]interface{}{"query": githubv4.String("user:" + g.Username)})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("List: %w", err)
 	}
 
 	var res []string

@@ -32,7 +32,6 @@ type Source interface {
 
 // New creates a new Source from the provided values
 func New(kind string, values map[string]string) (Source, error) {
-
 	// TODO: replace this mess via reflection
 	switch kind {
 	case sourceKindGitlab:

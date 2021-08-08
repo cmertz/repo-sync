@@ -1,6 +1,9 @@
 package sync
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 // Template is a template for generating `Sync`s
 // TODO: find a better name
@@ -14,10 +17,11 @@ type Template struct {
 func (t Template) Syncs(ctx context.Context) ([]Sync, error) {
 	remotes, err := t.RemoteSource.List(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Syncs: %w", err)
 	}
 
 	var res []Sync
+
 	for _, rem := range remotes {
 		r := remote(rem)
 

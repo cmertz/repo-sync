@@ -1,3 +1,6 @@
+// nolint: testpackage
+// converting tho blackbox tests (i.e. `sync_test` package)
+// requires exposing internals of `Sync`
 package sync
 
 import (
@@ -18,6 +21,7 @@ func TestSync_Do(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
 	defer os.Remove(tmp)
 
 	s := Sync{
