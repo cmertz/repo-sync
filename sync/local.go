@@ -11,7 +11,7 @@ import (
 type local string
 
 func (l local) ensureParentPathExists() error {
-	sep := string(os.PathSeparator)
+	const sep = string(os.PathSeparator)
 	elems := strings.Split(l.path(), sep)
 
 	parent := strings.Join(elems[:len(elems)-1], sep)
