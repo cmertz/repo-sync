@@ -9,4 +9,5 @@ require (
 	github.com/shurcooL/graphql v0.0.0-20200928012149-18c5c3165e3a // indirect
 	github.com/xanzy/go-gitlab v0.50.2
 	golang.org/x/oauth2 v0.0.0-20210805134026-6f1e6394065a
+	gopkg.in/yaml.v2 v2.3.0
 )
