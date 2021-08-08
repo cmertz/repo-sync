@@ -64,8 +64,8 @@ func New(kind string, values map[string]string) (Source, error) {
 		}
 
 		return Gitea{
-			URL:   values["url"],
-			Token: values["token"],
+			URL:   values[KeyURL],
+			Token: values[KeyToken],
 		}, nil
 
 	default:
