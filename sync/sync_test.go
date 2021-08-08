@@ -13,7 +13,7 @@ const defaultRemoteURL = "https://github.com/cmertz/repo-sync"
 // a sync, anything more elaborate (e.g. an in-memory working
 // copy and locally served git remote) would have required
 // a lot more indirection and complexity in the actual code
-func TestSync(t *testing.T) {
+func TestSync_Do(t *testing.T) {
 	tmp, err := ioutil.TempDir(os.TempDir(), "sync")
 	if err != nil {
 		t.Error(err)
