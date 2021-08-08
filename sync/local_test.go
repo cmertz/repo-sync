@@ -1,3 +1,5 @@
+// nolint: testpackage
+// testing an unexported function
 package sync
 
 import (
@@ -13,7 +15,7 @@ func TestLocal_ensureParentPathExists(t *testing.T) {
 	}
 
 	parent := tmp + string(os.PathSeparator) + "a"
-	l := local(parent + string(os.PathSeparator) + "b")
+	l := Local(parent + string(os.PathSeparator) + "b")
 
 	err = l.ensureParentPathExists()
 	if err != nil {

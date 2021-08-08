@@ -2,13 +2,14 @@ package sync
 
 import "strings"
 
-type remote string
+// Remote git repository
+type Remote string
 
-func (r remote) url() string {
+func (r Remote) url() string {
 	return string(r)
 }
 
-func (r remote) local(prefix string) local {
+func (r Remote) local(prefix string) Local {
 	p := strings.TrimSuffix(r.url(), ".git")
 
 	for _, prefix := range []string{"git@", "git://", "ssh://", "https://", "http://"} {
@@ -26,5 +27,5 @@ func (r remote) local(prefix string) local {
 		p = prefix + "/" + p
 	}
 
-	return local(p)
+	return Local(p)
 }

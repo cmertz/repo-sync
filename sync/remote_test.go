@@ -1,5 +1,5 @@
 // nolint: testpackage
-// testing an unexported type
+// testing an unexported function
 package sync
 
 import (
@@ -54,7 +54,7 @@ func TestRemote_local(t *testing.T) {
 		c := c
 
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			l := string(remote(c.remote).local(c.prefix))
+			l := string(Remote(c.remote).local(c.prefix))
 			if l != c.local {
 				t.Errorf("expected %s, actual %s", c.local, l)
 			}

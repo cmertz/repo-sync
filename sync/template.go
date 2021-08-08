@@ -23,7 +23,7 @@ func (t Template) Syncs(ctx context.Context) ([]Sync, error) {
 	var res []Sync
 
 	for _, rem := range remotes {
-		r := remote(rem)
+		r := Remote(rem)
 
 		res = append(res, Sync{
 			r,

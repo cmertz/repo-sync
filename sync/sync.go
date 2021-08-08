@@ -14,13 +14,13 @@ import (
 // Sync represents a synchronization from a remote
 // git repository to a local working copy
 type Sync struct {
-	remote remote
-	local  local
+	Remote Remote
+	Local  Local
 }
 
 func (s Sync) clone(ctx context.Context) error {
-	_, err := git.PlainCloneContext(ctx, s.local.path(), false, &git.CloneOptions{
-		URL: s.remote.url(),
+	_, err := git.PlainCloneContext(ctx, s.Local.path(), false, &git.CloneOptions{
+		URL: s.Remote.url(),
 	})
 
 	// ignore empty remotes
@@ -36,7 +36,7 @@ func (s Sync) clone(ctx context.Context) error {
 }
 
 func (s Sync) pull(ctx context.Context) error {
-	repo, err := s.local.open()
+	repo, err := s.Local.open()
 	if err != nil {
 		return fmt.Errorf("pull: %w", err)
 	}
@@ -62,8 +62,8 @@ func (s Sync) pull(ctx context.Context) error {
 
 // Do a sync from a remote repository to a local working copy
 func (s Sync) Do(ctx context.Context) error {
-	if !s.local.exists() {
-		err := s.local.ensureParentPathExists()
+	if !s.Local.exists() {
+		err := s.Local.ensureParentPathExists()
 		if err != nil {
 			return fmt.Errorf("Do: %w", err)
 		}

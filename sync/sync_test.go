@@ -1,13 +1,12 @@
-// nolint: testpackage
-// converting tho blackbox tests (i.e. `sync_test` package)
-// requires exposing internals of `Sync`
-package sync
+package sync_test
 
 import (
 	"context"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/cmertz/repo-sync/sync"
 )
 
 const defaultRemoteURL = "https://github.com/cmertz/repo-sync"
@@ -24,9 +23,9 @@ func TestSync_Do(t *testing.T) {
 
 	defer os.RemoveAll(tmp)
 
-	s := Sync{
-		remote: remote(defaultRemoteURL),
-		local:  local(tmp),
+	s := sync.Sync{
+		Remote: sync.Remote(defaultRemoteURL),
+		Local:  sync.Local(tmp),
 	}
 
 	err = s.Do(context.Background())

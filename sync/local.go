@@ -7,10 +7,10 @@ import (
 	"github.com/go-git/go-git/v5"
 )
 
-// local represents a local working copy of a git repository
-type local string
+// Local working copy of a git repository
+type Local string
 
-func (l local) ensureParentPathExists() error {
+func (l Local) ensureParentPathExists() error {
 	const sep = string(os.PathSeparator)
 	elems := strings.Split(l.path(), sep)
 
@@ -19,16 +19,16 @@ func (l local) ensureParentPathExists() error {
 	return os.MkdirAll(parent, 0700)
 }
 
-func (l local) open() (*git.Repository, error) {
+func (l Local) open() (*git.Repository, error) {
 	return git.PlainOpen(l.path())
 }
 
-func (l local) exists() bool {
+func (l Local) exists() bool {
 	_, err := l.open()
 
 	return err == nil
 }
 
-func (l local) path() string {
+func (l Local) path() string {
 	return string(l)
 }

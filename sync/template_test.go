@@ -1,12 +1,11 @@
-// nolint: testpackage
-// converting tho blackbox tests (i.e. `sync_test` package)
-// requires exposing internals of `Sync`
-package sync
+package sync_test
 
 import (
 	"context"
 	"errors"
 	"testing"
+
+	"github.com/cmertz/repo-sync/sync"
 )
 
 type dummyRemoteSource []string
@@ -22,7 +21,7 @@ func (e errorRemoteSource) List(context.Context) ([]string, error) {
 }
 
 func TestTemplate_Syncs(t *testing.T) {
-	tpl1 := Template{
+	tpl1 := sync.Template{
 		RemoteSource: dummyRemoteSource([]string{"a", "b"}),
 		LocalPrefix:  "/src",
 	}
@@ -36,15 +35,15 @@ func TestTemplate_Syncs(t *testing.T) {
 		t.Errorf("expected 2 results, actual %d results", len(s1))
 	}
 
-	if s1[0].local != "/src/a" {
-		t.Errorf("expected /src/a, actual %s", s1[0].local)
+	if s1[0].Local != "/src/a" {
+		t.Errorf("expected /src/a, actual %s", s1[0].Local)
 	}
 
-	if s1[1].local != "/src/b" {
-		t.Errorf("expected /src/b, actual %s", s1[1].local)
+	if s1[1].Local != "/src/b" {
+		t.Errorf("expected /src/b, actual %s", s1[1].Local)
 	}
 
-	tpl2 := Template{
+	tpl2 := sync.Template{
 		// nolint: goerr113
 		RemoteSource: errorRemoteSource{errors.New("woops")},
 		LocalPrefix:  "/src",
