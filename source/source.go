@@ -1,6 +1,5 @@
-// package source provides functionality to
-// list accessible remote repositories for
-// syncing
+// Package source lists the remote repositories to sync from a code hosting
+// service.
 package source
 
 import (
@@ -15,24 +14,31 @@ const (
 	sourceKindGithub = "github"
 	sourceKindGitea  = "gitea"
 
-	KeyToken    = "token"
+	// KeyToken is the key of the API token in the values passed to New.
+	KeyToken = "token"
+
+	// KeyUsername is the key of the GitHub user name in the values passed to New.
 	KeyUsername = "username"
-	KeyURL      = "url"
+
+	// KeyURL is the key of the server URL in the values passed to New.
+	KeyURL = "url"
 )
 
 var (
+	// ErrUnknownSourceKind reports a kind that New doesn't support.
 	ErrUnknownSourceKind = errors.New("unknown source kind")
-	ErrMissingField      = errors.New("missing field")
+	// ErrMissingField reports a value that New requires but didn't get.
+	ErrMissingField = errors.New("missing field")
 )
 
-// Source for remotes to sync from
+// Source lists the URLs of remote repositories to sync.
 type Source interface {
 	List(ctx context.Context) (remoteURLs []string, err error)
 }
 
-// New creates a new Source from the provided values
+// New creates a Source of the given kind ("gitea", "github", or "gitlab")
+// from values, which hold the fields that kind requires.
 func New(kind string, values map[string]string) (Source, error) {
-	// TODO: replace this mess via reflection
 	switch kind {
 	case sourceKindGitlab:
 		err := checkFieldsSet(values, KeyURL, KeyToken)
@@ -68,14 +74,13 @@ func New(kind string, values map[string]string) (Source, error) {
 		}, nil
 
 	default:
-		return nil, fmt.Errorf("%w: %s", ErrUnknownSourceKind, kind)
+		return nil, fmt.Errorf("%w: %q", ErrUnknownSourceKind, kind)
 	}
 }
 
 func checkFieldsSet(values map[string]string, keys ...string) error {
 	for _, k := range keys {
-		v, ok := values[k]
-		if !ok || len(strings.TrimSpace(v)) == 0 {
+		if strings.TrimSpace(values[k]) == "" {
 			return fmt.Errorf("%w: %s", ErrMissingField, k)
 		}
 	}

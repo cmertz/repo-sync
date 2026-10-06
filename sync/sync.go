@@ -1,5 +1,4 @@
-// package sync provides functionality to synchronize
-// remote git repositories to local working copies.
+// Package sync synchronizes remote git repositories to local working copies.
 package sync
 
 import (
@@ -11,72 +10,77 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 )
 
-// Sync represents a synchronization from a remote
-// git repository to a local working copy
+// ErrNotRepository reports a local path that holds files but no git
+// repository, so cloning into it could overwrite them.
+var ErrNotRepository = errors.New("not empty and not a git repository")
+
+// Sync represents a synchronization from a remote git repository to a local
+// working copy.
 type Sync struct {
 	Remote Remote
 	Local  Local
 }
 
+// Do clones the remote repository when the local working copy doesn't exist
+// yet, and pulls into the working copy otherwise. Pulls only fast-forward.
+// Do skips an empty remote repository, since there is nothing to clone.
+func (s Sync) Do(ctx context.Context) error {
+	repo, err := s.Local.open()
+	if errors.Is(err, git.ErrRepositoryNotExists) {
+		return s.clone(ctx)
+	}
+
+	if err != nil {
+		return fmt.Errorf("syncing %s: %w", s.Remote, err)
+	}
+
+	return s.pull(ctx, repo)
+}
+
 func (s Sync) clone(ctx context.Context) error {
-	_, err := git.PlainCloneContext(ctx, s.Local.path(), false, &git.CloneOptions{
+	empty, err := s.Local.isEmpty()
+	if err != nil {
+		return fmt.Errorf("cloning %s: %w", s.Remote, err)
+	}
+
+	if !empty {
+		return fmt.Errorf("cloning %s: %s: %w", s.Remote, s.Local, ErrNotRepository)
+	}
+
+	err = s.Local.ensureParentPathExists()
+	if err != nil {
+		return fmt.Errorf("cloning %s: %w", s.Remote, err)
+	}
+
+	_, err = git.PlainCloneContext(ctx, s.Local.path(), false, &git.CloneOptions{
 		URL: s.Remote.url(),
 	})
 
-	// ignore empty remotes
+	// go-git removes what it created, so the next run tries again.
 	if errors.Is(err, transport.ErrEmptyRemoteRepository) {
 		return nil
 	}
 
 	if err != nil {
-		return fmt.Errorf("clone: %w", err)
+		return fmt.Errorf("cloning %s into %s: %w", s.Remote, s.Local, err)
 	}
 
 	return nil
 }
 
-func (s Sync) pull(ctx context.Context) error {
-	repo, err := s.Local.open()
-	if err != nil {
-		return fmt.Errorf("pull: %w", err)
-	}
-
+func (s Sync) pull(ctx context.Context, repo *git.Repository) error {
 	w, err := repo.Worktree()
 	if err != nil {
-		return fmt.Errorf("pull: %w", err)
+		return fmt.Errorf("pulling %s into %s: %w", s.Remote, s.Local, err)
 	}
 
 	err = w.PullContext(ctx, &git.PullOptions{})
-
-	// ignore if there's nothing to update
 	if errors.Is(err, git.NoErrAlreadyUpToDate) {
 		return nil
 	}
 
 	if err != nil {
-		return fmt.Errorf("pull: %w", err)
-	}
-
-	return nil
-}
-
-// Do a sync from a remote repository to a local working copy
-func (s Sync) Do(ctx context.Context) error {
-	if !s.Local.exists() {
-		err := s.Local.ensureParentPathExists()
-		if err != nil {
-			return fmt.Errorf("Do: %w", err)
-		}
-
-		err = s.clone(ctx)
-		if err != nil {
-			return fmt.Errorf("Do: %w", err)
-		}
-	}
-
-	err := s.pull(ctx)
-	if err != nil {
-		return fmt.Errorf("Do: %w", err)
+		return fmt.Errorf("pulling %s into %s: %w", s.Remote, s.Local, err)
 	}
 
 	return nil

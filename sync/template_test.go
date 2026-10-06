@@ -3,6 +3,7 @@ package sync_test
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"testing"
 
 	"github.com/cmertz/repo-sync/sync"
@@ -11,50 +12,63 @@ import (
 type dummyRemoteSource []string
 
 func (d dummyRemoteSource) List(context.Context) ([]string, error) {
-	return []string(d), nil
+	return d, nil
 }
 
 type errorRemoteSource struct{ error }
 
 func (e errorRemoteSource) List(context.Context) ([]string, error) {
-	return nil, error(e)
+	return nil, e.error
 }
 
 func TestTemplate_Syncs(t *testing.T) {
-	tpl1 := sync.Template{
-		RemoteSource: dummyRemoteSource([]string{"a", "b"}),
-		LocalPrefix:  "/src",
-	}
+	t.Run("maps remotes below the prefix", func(t *testing.T) {
+		tpl := sync.Template{
+			RemoteSource: dummyRemoteSource{"a", "git@example.com:user/b.git"},
+			LocalPrefix:  "/src",
+		}
 
-	s1, err := tpl1.Syncs(context.Background())
-	if err != nil {
-		t.Errorf("unexpected error: %s", err)
-	}
+		got, err := tpl.Syncs(t.Context())
+		if err != nil {
+			t.Fatalf("Syncs() error = %v", err)
+		}
 
-	if len(s1) != 2 {
-		t.Errorf("expected 2 results, actual %d results", len(s1))
-	}
+		want := []sync.Sync{
+			{Remote: "a", Local: sync.Local(filepath.FromSlash("/src/a"))},
+			{Remote: "git@example.com:user/b.git", Local: sync.Local(filepath.FromSlash("/src/example.com/user/b"))},
+		}
 
-	if s2, _ := s1[0].(sync.Sync); s2.Local != "/src/a" {
-		t.Errorf("expected /src/a, actual %s", s2.Local)
-	}
+		if len(got) != len(want) {
+			t.Fatalf("Syncs() = %v, want %v", got, want)
+		}
 
-	if s2, _ := s1[1].(sync.Sync); s2.Local != "/src/b" {
-		t.Errorf("expected /src/b, actual %s", s2.Local)
-	}
+		for i := range want {
+			if got[i] != want[i] {
+				t.Errorf("Syncs()[%d] = %v, want %v", i, got[i], want[i])
+			}
+		}
+	})
 
-	tpl2 := sync.Template{
-		// nolint: goerr113
-		RemoteSource: errorRemoteSource{errors.New("woops")},
-		LocalPrefix:  "/src",
-	}
+	t.Run("reports a failed listing", func(t *testing.T) {
+		errList := errors.New("woops")
+		tpl := sync.Template{RemoteSource: errorRemoteSource{errList}, LocalPrefix: "/src"}
 
-	s2, err := tpl2.Syncs(context.Background())
-	if err == nil {
-		t.Error("expected error, got nil")
-	}
+		got, err := tpl.Syncs(t.Context())
+		if !errors.Is(err, errList) {
+			t.Errorf("Syncs() error = %v, want %v", err, errList)
+		}
 
-	if s2 != nil {
-		t.Errorf("expected nil result, actual %v", s2)
-	}
+		if got != nil {
+			t.Errorf("Syncs() = %v, want nil", got)
+		}
+	})
+
+	t.Run("rejects a remote outside the prefix", func(t *testing.T) {
+		tpl := sync.Template{RemoteSource: dummyRemoteSource{"git@example.com:../../etc"}, LocalPrefix: "/src"}
+
+		_, err := tpl.Syncs(t.Context())
+		if !errors.Is(err, sync.ErrInvalidRemote) {
+			t.Errorf("Syncs() error = %v, want %v", err, sync.ErrInvalidRemote)
+		}
+	})
 }

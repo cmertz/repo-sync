@@ -8,13 +8,34 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// Github is a github source for remotes to sync from
+// githubPageSize is the most search results the GitHub GraphQL API returns
+// per page.
+const githubPageSize = 100
+
+// Github is a GitHub source for remotes to sync from.
 type Github struct {
 	Username string
 	Token    string
 }
 
-// List remote repository urls
+// githubSearch is one page of the repositories a GitHub search finds.
+type githubSearch struct {
+	Search struct {
+		PageInfo struct {
+			EndCursor   githubv4.String
+			HasNextPage githubv4.Boolean
+		}
+		Nodes []struct {
+			Repository struct {
+				SSHURL githubv4.String `graphql:"sshUrl"`
+			} `graphql:"... on Repository"`
+		}
+	} `graphql:"search(query: $query, type: REPOSITORY, first: $first, after: $cursor)"`
+}
+
+// List returns the SSH URLs of the repositories that the user owns and the
+// token can see. It uses the GitHub search, which leaves out forks and finds
+// at most 1,000 repositories.
 func (g Github) List(ctx context.Context) ([]string, error) {
 	client := githubv4.NewClient(
 		oauth2.NewClient(
@@ -25,33 +46,30 @@ func (g Github) List(ctx context.Context) ([]string, error) {
 		),
 	)
 
-	// TODO: pagination
-	var query struct {
-		Search struct {
-			RepositoryCount githubv4.Int
-			PageInfo        struct {
-				EndCursor   githubv4.String
-				StartCursor githubv4.String
-			}
-			Edges []struct {
-				Node struct {
-					Repository struct {
-						SSHURL githubv4.String
-					} `graphql:"... on Repository"`
-				}
-			}
-		} `graphql:"search(query: $query, type: REPOSITORY, first: 100)"`
+	vars := map[string]any{
+		"query":  githubv4.String("user:" + g.Username),
+		"first":  githubv4.Int(githubPageSize),
+		"cursor": (*githubv4.String)(nil),
 	}
 
-	err := client.Query(ctx, &query, map[string]interface{}{"query": githubv4.String("user:" + g.Username)})
-	if err != nil {
-		return nil, fmt.Errorf("List: %w", err)
-	}
+	var urls []string
 
-	var res []string
-	for _, edge := range query.Search.Edges {
-		res = append(res, string(edge.Node.Repository.SSHURL))
-	}
+	for {
+		var page githubSearch
 
-	return res, nil
+		err := client.Query(ctx, &page, vars)
+		if err != nil {
+			return nil, fmt.Errorf("github user %s: searching repositories: %w", g.Username, err)
+		}
+
+		for _, n := range page.Search.Nodes {
+			urls = append(urls, string(n.Repository.SSHURL))
+		}
+
+		if !page.Search.PageInfo.HasNextPage {
+			return urls, nil
+		}
+
+		vars["cursor"] = githubv4.NewString(page.Search.PageInfo.EndCursor)
+	}
 }
