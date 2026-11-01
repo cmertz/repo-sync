@@ -1,62 +1,52 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"io"
 	"os"
+
+	"go.yaml.in/yaml/v3"
 
 	"github.com/cmertz/repo-sync/source"
 	"github.com/cmertz/repo-sync/sync"
-
-	"gopkg.in/yaml.v2"
 )
 
+// Keys of a source in the configuration file, besides the ones source.New
+// reads.
 const (
 	keyKind   = "kind"
 	keyPrefix = "prefix"
 )
 
-// TODO: split functions off of the Config type
-// TODO: come up with a better name
-type Config string
-
-func (c Config) path() string {
-	return string(c)
-}
-
-func (c Config) read() ([]byte, error) {
-	f, err := os.Open(c.path())
+// readTemplates reads the configuration file at path, a YAML list of sources,
+// and returns a sync.Template for each source.
+func readTemplates(path string) ([]sync.Template, error) {
+	b, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("read: %w", err)
+		return nil, fmt.Errorf("reading config: %w", err)
 	}
 
-	return io.ReadAll(f)
-}
-
-func (c Config) templates() ([]sync.Template, error) {
-	b, err := c.read()
+	tpls, err := parseTemplates(b)
 	if err != nil {
-		return nil, fmt.Errorf("templates: %w", err)
+		return nil, fmt.Errorf("config %s: %w", path, err)
 	}
 
-	return c.templatesFromBytes(b)
+	return tpls, nil
 }
 
-func (Config) templatesFromBytes(b []byte) ([]sync.Template, error) {
+func parseTemplates(b []byte) ([]sync.Template, error) {
 	var entries []map[string]string
 
 	err := yaml.Unmarshal(b, &entries)
 	if err != nil {
-		return nil, fmt.Errorf("templatesFromBytes: %w", err)
+		return nil, fmt.Errorf("parsing yaml: %w", err)
 	}
 
-	var tpls []sync.Template
+	tpls := make([]sync.Template, 0, len(entries))
 
-	for _, e := range entries {
+	for i, e := range entries {
 		s, err := source.New(e[keyKind], e)
 		if err != nil {
-			return nil, fmt.Errorf("templatesFromBytes: %w", err)
+			return nil, fmt.Errorf("source %d: %w", i+1, err)
 		}
 
 		tpls = append(tpls, sync.Template{
@@ -66,24 +56,4 @@ func (Config) templatesFromBytes(b []byte) ([]sync.Template, error) {
 	}
 
 	return tpls, nil
-}
-
-func (c Config) syncs(ctx context.Context) ([]sync.Syncer, error) {
-	tpls, err := c.templates()
-	if err != nil {
-		return nil, fmt.Errorf("syncs: %w", err)
-	}
-
-	var syncs []sync.Syncer
-
-	for _, t := range tpls {
-		s, err := t.Syncs(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("syncs: %w", err)
-		}
-
-		syncs = append(syncs, s...)
-	}
-
-	return syncs, nil
 }

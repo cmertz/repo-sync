@@ -1,31 +1,66 @@
 package sync
 
-import "strings"
+import (
+	"errors"
+	"fmt"
+	"net/url"
+	"path/filepath"
+	"strings"
+)
 
-// Remote git repository
+// ErrInvalidRemote reports a remote URL that maps to no path below the local
+// prefix.
+var ErrInvalidRemote = errors.New("invalid remote")
+
+// Remote is the URL of a remote git repository.
 type Remote string
 
 func (r Remote) url() string {
 	return string(r)
 }
 
-func (r Remote) local(prefix string) Local {
-	p := strings.TrimSuffix(r.url(), ".git")
+// local returns the path of the working copy of r below prefix: the host and
+// path of the URL, without scheme, user, port, and ".git" suffix. It rejects
+// a URL whose path would escape prefix.
+func (r Remote) local(prefix string) (Local, error) {
+	host, path, err := r.hostAndPath()
+	if err != nil {
+		return "", fmt.Errorf("%w %q: %w", ErrInvalidRemote, r, err)
+	}
 
-	for _, prefix := range []string{"git@", "git://", "ssh://", "https://", "http://"} {
-		// strip only the first prefix we find, everything else is odd
-		if strings.HasPrefix(p, prefix) {
-			p = strings.TrimPrefix(p, prefix)
+	path = strings.TrimSuffix(strings.TrimLeft(path, "/"), ".git")
 
-			break
+	rel := filepath.Join(host, filepath.FromSlash(path))
+	if rel == "." || !filepath.IsLocal(rel) {
+		return "", fmt.Errorf("%w %q: no path below the prefix", ErrInvalidRemote, r)
+	}
+
+	return Local(filepath.Join(prefix, rel)), nil
+}
+
+// hostAndPath splits r into host and path. It understands URLs with a scheme
+// ("ssh://git@example.com:2222/user/repo.git"), the scp-like syntax of SSH
+// ("git@example.com:user/repo.git"), and plain paths.
+func (r Remote) hostAndPath() (host, path string, err error) {
+	s := r.url()
+
+	if strings.Contains(s, "://") {
+		u, err := url.Parse(s)
+		if err != nil {
+			return "", "", fmt.Errorf("parsing url: %w", err)
 		}
+
+		return u.Hostname(), u.Path, nil
 	}
 
-	p = strings.ReplaceAll(p, ":", "/")
+	// As with git, a colon before the first slash makes it scp-like.
+	userHost, path, found := strings.Cut(s, ":")
+	if found && !strings.Contains(userHost, "/") {
+		// Drop the user, if any; LastIndex is -1 without one.
+		host = userHost[strings.LastIndex(userHost, "@")+1:]
 
-	if len(prefix) != 0 {
-		p = prefix + "/" + p
+		return host, path, nil
 	}
 
-	return Local(p)
+	return "", s, nil
 }

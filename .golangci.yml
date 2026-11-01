@@ -1,12 +1,17 @@
+version: "2"
+
 linters:
-  disable-all: true
+  default: none
   enable:
+    - asciicheck
     - bodyclose
-    - deadcode
-    - depguard
+    - copyloopvar
     - dogsled
     - dupl
+    - err113
     - errcheck
+    - errorlint
+    - exhaustive
     - funlen
     - gochecknoglobals
     - gochecknoinits
@@ -14,44 +19,47 @@ linters:
     - goconst
     - gocritic
     - gocyclo
-    - gofmt
-    - goimports
-    - golint
-    - gomnd
     - goprintffuncname
     - gosec
-    - gosimple
     - govet
     - ineffassign
-    - interfacer
     - lll
-    - maligned
     - misspell
+    - mnd
     - nakedret
-    - rowserrcheck
-    - scopelint
-    - staticcheck
-    - structcheck
-    - stylecheck
-    - typecheck
-    - unconvert
-    - unparam
-    - unused
-    - varcheck
-    - whitespace
-    - asciicheck
-    - errorlint
-    - exhaustive
-    - exportloopref
-    - goerr113
-    - goheader
-    - gomodguard
     - nestif
     - nlreturn
     - noctx
     - nolintlint
+    - revive
+    - rowserrcheck
     - sqlclosecheck
+    - staticcheck
     - testpackage
     - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - whitespace
     - wrapcheck
-    - wsl
+    - wsl_v5
+  exclusions:
+    presets:
+      - common-false-positives
+      - std-error-handling
+    rules:
+      # Table-driven tests repeat literals and grow long by design.
+      - path: _test\.go
+        linters:
+          - err113
+          - funlen
+          - goconst
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/cmertz/repo-sync

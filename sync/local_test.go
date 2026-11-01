@@ -1,39 +1,59 @@
-// nolint: testpackage
-// testing an unexported function
+//nolint:testpackage // tests unexported methods
 package sync
 
 import (
-	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
 func TestLocal_ensureParentPathExists(t *testing.T) {
-	tmp, err := ioutil.TempDir(os.TempDir(), "local")
+	parent := filepath.Join(t.TempDir(), "a")
+	l := Local(filepath.Join(parent, "b"))
+
+	// The second call checks that an existing parent is fine.
+	for range 2 {
+		err := l.ensureParentPathExists()
+		if err != nil {
+			t.Fatalf("ensureParentPathExists() error = %v", err)
+		}
+
+		_, err = os.Stat(parent)
+		if err != nil {
+			t.Fatalf("parent %s: %v", parent, err)
+		}
+	}
+}
+
+func TestLocal_isEmpty(t *testing.T) {
+	empty := t.TempDir()
+	full := t.TempDir()
+
+	err := os.WriteFile(filepath.Join(full, "file"), nil, 0o600)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
-	parent := tmp + string(os.PathSeparator) + "a"
-	l := Local(parent + string(os.PathSeparator) + "b")
-
-	err = l.ensureParentPathExists()
-	if err != nil {
-		t.Errorf("unexpected error %s", err)
+	cases := []struct {
+		name string
+		path string
+		want bool
+	}{
+		{"missing", filepath.Join(empty, "missing"), true},
+		{"empty directory", empty, true},
+		{"directory with entries", full, false},
 	}
 
-	defer os.RemoveAll(tmp)
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, err := Local(c.path).isEmpty()
+			if err != nil {
+				t.Fatalf("isEmpty() error = %v", err)
+			}
 
-	if _, err := os.Stat(parent); os.IsNotExist(err) {
-		t.Errorf("expected path %s to exist", parent)
-	}
-
-	err = l.ensureParentPathExists()
-	if err != nil {
-		t.Errorf("unexpected error %s", err)
-	}
-
-	if _, err := os.Stat(parent); os.IsNotExist(err) {
-		t.Errorf("expected path %s to still exist", parent)
+			if got != c.want {
+				t.Errorf("isEmpty() = %t, want %t", got, c.want)
+			}
+		})
 	}
 }
